@@ -49,11 +49,24 @@ public class ViewportPastingDecorator extends ShootingDecorator {
 
         int viewportHeight = pageDimensions.getViewportHeight();
         int scrollTimes = (int) Math.ceil(shootingArea.getHeight() / viewportHeight);
+
         for (int n = 0; n < scrollTimes; n++) {
+
             scrollVertically(js, shootingArea.y + viewportHeight * n);
             waitForScrolling();
-            BufferedImage part = getShootingStrategy().getScreenshot(wd);
-            graphics.drawImage(part, 0, getCurrentScrollY(js) - shootingArea.y, null);
+            BufferedImage part = null;
+            if (n == (scrollTimes - 1)) {
+                part = getShootingStrategy().getScreenshot(wd)
+                       .getSubimage(0,
+                                    viewportHeight - ((int) shootingArea.getHeight() - (viewportHeight * n)),
+                                    pageDimensions.getViewportWidth(),
+                                    (int) shootingArea.getHeight() - (viewportHeight * n));
+            } else {
+                part = getShootingStrategy().getScreenshot(wd);
+            }
+
+//            graphics.drawImage(part, 0, getCurrentScrollY(js) - shootingArea.y, null);
+            graphics.drawImage(part, 0, viewportHeight * n, null);
         }
 
         graphics.dispose();
@@ -73,7 +86,7 @@ public class ViewportPastingDecorator extends ShootingDecorator {
 
     protected int getCurrentScrollY(JavascriptExecutor js) {
         return ((Number) js.executeScript("var scrY = window.pageYOffset;"
-                + "if(scrY){return scrY;} else {return 0;}")).intValue();
+                + "if(scrY>0){return scrY;} else {return 0;}")).intValue();
     }
 
     protected void scrollVertically(JavascriptExecutor js, int scrollY) {
